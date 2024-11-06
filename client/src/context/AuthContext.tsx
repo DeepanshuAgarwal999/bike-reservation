@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
 import UserApi from '../apis/UserApi';
 import { JwtPayload, jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ type AuthContextType = {
     logout: () => void;
     isAuthenticated: boolean;
     isManager: boolean
+    hasUserFetched: boolean
 }
 interface UserJwtPayload extends JwtPayload {
     id: number,
@@ -31,14 +32,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const navigate = useNavigate()
     const token = localStorage.getItem('token');
+    const hasUserFetched = useRef(false)
+
+
     useEffect(() => {
         if (token) {
             const decodedToken: UserJwtPayload = jwtDecode(token);
+
             setUser({ token, id: decodedToken.id, isManager: decodedToken.isManager });
         } else {
             navigate('/login')
         }
     }, [token]);
+
+   
+
+    useEffect(() => {
+        if (user) {
+            hasUserFetched.current = true
+        }
+        else {
+            hasUserFetched.current = false
+        }
+    }, [user])
+
+
+
+
+
+
 
     const login = async (credentials: loginType) => {
         try {
@@ -59,10 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         localStorage.removeItem('token');
     };
-    const isAuthenticated = Boolean(user && user?.token);
-    const isManager = (user && user?.isManager) ?? false;
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isManager }}>
+        <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isManager: !!user?.isManager, hasUserFetched: hasUserFetched.current }}>
             {children}
         </AuthContext.Provider>
     );

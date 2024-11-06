@@ -3,13 +3,17 @@ import { useAuth } from '../context/AuthContext'
 import { Navigate, useNavigate } from 'react-router-dom'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    const { user, isAuthenticated } = useAuth()!;
+    const { user, isAuthenticated, hasUserFetched } = useAuth()!;
     const navigate = useNavigate()
+    console.log({ user, isAuthenticated })
+
     useEffect(() => {
-        if (!isAuthenticated) {
+        debugger
+        if (!isAuthenticated && !user && hasUserFetched) {
             navigate('/login')
         }
-    }, [isAuthenticated])
+    }, [user, isAuthenticated])
+
     return (
         <div>
             {children}
